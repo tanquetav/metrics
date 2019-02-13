@@ -109,25 +109,25 @@ public final class CoreTutorial {
 
 		// For instrumentation and runtime we need a IRuntime instance
 		// to collect execution data:
-		final IRuntime runtime = new LoggerRuntime();
+//		final IRuntime runtime = new LoggerRuntime();
 
 		// The Instrumenter creates a modified version of our test target class
 		// that contains additional probes for execution data recording:
-		final Instrumenter instr = new Instrumenter(runtime);
 		InputStream original = getTargetClass(targetName);
-		final byte[] instrumented = instr.instrument(original, targetName);
-		original.close();
+//		final Instrumenter instr = new Instrumenter(runtime);
+//		final byte[] instrumented = instr.instrument(original, targetName);
+//		original.close();
 
 		// Now we're ready to run our instrumented class and need to startup the
 		// runtime first:
-		final RuntimeData data = new RuntimeData();
-		runtime.startup(data);
+//		final RuntimeData data = new RuntimeData();
+//		runtime.startup(data);
 
 		// In this tutorial we use a special class loader to directly load the
 		// instrumented class definition from a byte[] instances.
-		final MemoryClassLoader memoryClassLoader = new MemoryClassLoader();
-		memoryClassLoader.addDefinition(targetName, instrumented);
-		final Class<?> targetClass = memoryClassLoader.loadClass(targetName);
+//		final MemoryClassLoader memoryClassLoader = new MemoryClassLoader();
+//		memoryClassLoader.addDefinition(targetName, instrumented);
+//		final Class<?> targetClass = memoryClassLoader.loadClass(targetName);
 		final ExecutionDataStore executionData = new ExecutionDataStore();
 //
 //		// Here we execute our test target class through its Runnable interface:
@@ -159,7 +159,7 @@ public final class CoreTutorial {
 			printCounter("complexity", cc.getComplexityCounter());
 
 			for (IMethodCoverage mc : cc.getMethods()) {
-				out.printf("Coverage of method %s %s%n", mc.getName(), mc.getSignature());
+				out.printf("Coverage of method %s %s%n", mc.getName(), mc.getDesc());
 
 				printCounter("instructions", mc.getInstructionCounter());
 				printCounter("branches", mc.getBranchCounter());
@@ -182,7 +182,7 @@ public final class CoreTutorial {
 	private void printCounter(final String unit, final ICounter counter) {
 		final Integer missed = Integer.valueOf(counter.getMissedCount());
 		final Integer total = Integer.valueOf(counter.getTotalCount());
-		out.printf("%s of %s %s missed%n", missed, total, unit);
+		out.printf("%s %s %n", total, unit);
 	}
 
 	private String getColor(final int status) {
