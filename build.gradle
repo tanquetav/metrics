@@ -12,7 +12,9 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
-    compile group: 'org.ow2.asm', name: 'asm', version: '7.0'
-    compile group: 'org.ow2.asm', name: 'asm-commons', version: '7.0'
-    compile group: 'org.ow2.asm', name: 'asm-tree', version: '7.0'
+//    compile group: 'org.ow2.asm', name: 'asm', version: '7.0'
+//    compile group: 'org.ow2.asm', name: 'asm-commons', version: '7.0'
+//    compile group: 'org.ow2.asm', name: 'asm-tree', version: '7.0'
+    compile group: 'org.jacoco', name: 'org.jacoco.core', version: '0.8.3'
+
 }
