@@ -158,7 +158,7 @@ public final class Start {
 						pstmt.setString(1, cc.getPackageName());
 						pstmt.setString(2, cc.getSourceFileName());
 						pstmt.setString(3, cc.getName());
-						pstmt.setString(4, mc.getName());
+						pstmt.setString(4, mc.getName()+" "+mc.getDesc());
 						pstmt.setDouble(5, mc.getComplexityCounter().getTotalCount());
 						pstmt.setDouble(6, mc.getComplexityCounter().getTotalCount());
 						pstmt.setDouble(7, mc.getLineCounter().getTotalCount());

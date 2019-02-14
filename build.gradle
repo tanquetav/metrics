@@ -4,9 +4,22 @@ buildscript {
     }
 }
 apply plugin: 'java'
+apply plugin: 'application'
 repositories {
     mavenCentral()
 }
+
+mainClassName = 'br.com.george.metrics.Start'
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'br.com.george.metrics.Start'
+    }
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
