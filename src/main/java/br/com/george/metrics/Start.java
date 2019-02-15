@@ -31,13 +31,20 @@ import java.util.regex.Pattern;
  */
 public final class Start {
 
-	private static String classSql = "INSERT INTO class_metrics (package,file,class,cyclomatic,cyclomaticmodified,lineofcode,methods) VALUES (?,?,?,?,?,?,?) ";
-	private static String methodSql = "INSERT INTO method_metrics (package,file,class,method,cyclomatic,cyclomaticmodified,lineofcode,countparams) VALUES (?,?,?,?,?,?,?,?) ";
-	private static String pkgCreateSql = "INSERT INTO package_metrics (package,cyclomatic,cyclomaticmodified,lineofcode) VALUES (?,0,0,0) ";
-	private static String fileCreateSql = "INSERT INTO file_metrics (file,cyclomatic,cyclomaticmodified,lineofcode) VALUES (?,0,0,0) ";
-	private static String pkgUpdateSql = "UPDATE package_metrics SET cyclomatic=cyclomatic+?,cyclomaticmodified=cyclomaticmodified+?,lineofcode=lineofcode+? WHERE package=? ";
-	private static String fileUpdateSql = "UPDATE file_metrics SET cyclomatic=cyclomatic+?,cyclomaticmodified=cyclomaticmodified+?,lineofcode=lineofcode+? WHERE file=? ";
+	private static String classSql = "INSERT INTO class_metrics (package,file,class,metric,value) VALUES (?,?,?,?,?) ";
+	private static String methodSql = "INSERT INTO method_metrics (package,file,class,method,metric,value) VALUES (?,?,?,?,?,?) ";
+	private static String pkgCreateSql = "INSERT INTO package_metrics (package,metric,value) VALUES (?,?,0) ";
+	private static String fileCreateSql = "INSERT INTO file_metrics (package,file,metric,value) VALUES (?,?,?,0) ";
+	private static String pkgUpdateSql = "UPDATE package_metrics SET value=value+? WHERE package=? AND metric=?";
+	private static String fileUpdateSql = "UPDATE file_metrics SET value=value+? WHERE package=? and file=? AND metric=?";
 
+	private static String CountParams = "CountParams";
+	private static String CyclomaticModified = "CyclomaticModified";
+	private static String Cyclomatic = "Cyclomatic";
+	private static String CountLineCode = "CountLineCode";
+	private static String CountDeclMethod = "CountDeclMethod";
+
+	private String[] metrics = new String [] {CyclomaticModified,Cyclomatic,CountLineCode};
 
 	private static Pattern allParamsPattern = Pattern.compile("(\\(.*?\\))");
 	private static Pattern paramsPattern = Pattern.compile("(\\[?)(C|Z|S|I|J|F|D|(:?L[^;]+;))");
@@ -115,30 +122,61 @@ public final class Start {
 
 			for (final IClassCoverage cc : coverageBuilder.getClasses()) {
 
-				try (PreparedStatement pstmt = conn.prepareStatement(pkgCreateSql)) {
-					pstmt.setString(1, cc.getPackageName());
+				for (String met : metrics ) {
+					try (PreparedStatement pstmt = conn.prepareStatement(pkgCreateSql)) {
+						pstmt.setString(1, cc.getPackageName());
+						pstmt.setString(2, met);
+						pstmt.executeUpdate();
+					}
+					catch (Exception e ) {
+					}
+					try (PreparedStatement pstmt = conn.prepareStatement(fileCreateSql)) {
+						pstmt.setString(1, cc.getPackageName());
+						pstmt.setString(2, cc.getSourceFileName());
+						pstmt.setString(3, met);
+						pstmt.executeUpdate();
+					}
+					catch (Exception e ) {
+					}
+				}
+
+				try (PreparedStatement pstmt = conn.prepareStatement(pkgUpdateSql)) {
+					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, CyclomaticModified);
 					pstmt.executeUpdate();
-				}
-				catch (Exception e ) {
-				}
-				try (PreparedStatement pstmt = conn.prepareStatement(fileCreateSql)) {
-					pstmt.setString(1, cc.getSourceFileName());
-					pstmt.executeUpdate();
-				}
-				catch (Exception e ) {
 				}
 				try (PreparedStatement pstmt = conn.prepareStatement(pkgUpdateSql)) {
 					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
-					pstmt.setDouble(2, cc.getComplexityCounter().getTotalCount());
-					pstmt.setDouble(3, cc.getLineCounter().getTotalCount());
-					pstmt.setString(4, cc.getPackageName());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, Cyclomatic);
+					pstmt.executeUpdate();
+				}
+				try (PreparedStatement pstmt = conn.prepareStatement(pkgUpdateSql)) {
+					pstmt.setDouble(1, cc.getLineCounter().getTotalCount());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, CountLineCode);
 					pstmt.executeUpdate();
 				}
 				try (PreparedStatement pstmt = conn.prepareStatement(fileUpdateSql)) {
 					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
-					pstmt.setDouble(2, cc.getComplexityCounter().getTotalCount());
-					pstmt.setDouble(3, cc.getLineCounter().getTotalCount());
-					pstmt.setString(4, cc.getSourceFileName());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, cc.getSourceFileName());
+					pstmt.setString(4, CyclomaticModified);
+					pstmt.executeUpdate();
+				}
+				try (PreparedStatement pstmt = conn.prepareStatement(fileUpdateSql)) {
+					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, cc.getSourceFileName());
+					pstmt.setString(4, Cyclomatic);
+					pstmt.executeUpdate();
+				}
+				try (PreparedStatement pstmt = conn.prepareStatement(fileUpdateSql)) {
+					pstmt.setDouble(1, cc.getLineCounter().getTotalCount());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, cc.getSourceFileName());
+					pstmt.setString(4, CountLineCode);
 					pstmt.executeUpdate();
 				}
 
@@ -146,10 +184,32 @@ public final class Start {
 					pstmt.setString(1, cc.getPackageName());
 					pstmt.setString(2, cc.getSourceFileName());
 					pstmt.setString(3, cc.getName());
-					pstmt.setDouble(4, cc.getComplexityCounter().getTotalCount());
+					pstmt.setString(4, CyclomaticModified);
 					pstmt.setDouble(5, cc.getComplexityCounter().getTotalCount());
-					pstmt.setDouble(6, cc.getLineCounter().getTotalCount());
-					pstmt.setDouble(7, cc.getMethodCounter().getTotalCount());
+					pstmt.executeUpdate();
+				}
+ 				try (PreparedStatement pstmt = conn.prepareStatement(classSql)) {
+					pstmt.setString(1, cc.getPackageName());
+					pstmt.setString(2, cc.getSourceFileName());
+					pstmt.setString(3, cc.getName());
+					pstmt.setString(4, Cyclomatic);
+					pstmt.setDouble(5, cc.getComplexityCounter().getTotalCount());
+					pstmt.executeUpdate();
+				}
+ 				try (PreparedStatement pstmt = conn.prepareStatement(classSql)) {
+					pstmt.setString(1, cc.getPackageName());
+					pstmt.setString(2, cc.getSourceFileName());
+					pstmt.setString(3, cc.getName());
+					pstmt.setString(4, CountLineCode);
+					pstmt.setDouble(5, cc.getLineCounter().getTotalCount());
+					pstmt.executeUpdate();
+				}
+ 				try (PreparedStatement pstmt = conn.prepareStatement(classSql)) {
+					pstmt.setString(1, cc.getPackageName());
+					pstmt.setString(2, cc.getSourceFileName());
+					pstmt.setString(3, cc.getName());
+					pstmt.setString(4, CountDeclMethod);
+					pstmt.setDouble(5, cc.getMethodCounter().getTotalCount());
 					pstmt.executeUpdate();
 				}
 
@@ -159,10 +219,35 @@ public final class Start {
 						pstmt.setString(2, cc.getSourceFileName());
 						pstmt.setString(3, cc.getName());
 						pstmt.setString(4, mc.getName()+" "+mc.getDesc());
-						pstmt.setDouble(5, mc.getComplexityCounter().getTotalCount());
+						pstmt.setString(5, CyclomaticModified);
 						pstmt.setDouble(6, mc.getComplexityCounter().getTotalCount());
-						pstmt.setDouble(7, mc.getLineCounter().getTotalCount());
-						pstmt.setDouble(8, getMethodParamCount(mc.getDesc()));
+						pstmt.executeUpdate();
+					}
+					try (PreparedStatement pstmt = conn.prepareStatement(methodSql)) {
+						pstmt.setString(1, cc.getPackageName());
+						pstmt.setString(2, cc.getSourceFileName());
+						pstmt.setString(3, cc.getName());
+						pstmt.setString(4, mc.getName()+" "+mc.getDesc());
+						pstmt.setString(5, Cyclomatic);
+						pstmt.setDouble(6, mc.getComplexityCounter().getTotalCount());
+						pstmt.executeUpdate();
+					}
+					try (PreparedStatement pstmt = conn.prepareStatement(methodSql)) {
+						pstmt.setString(1, cc.getPackageName());
+						pstmt.setString(2, cc.getSourceFileName());
+						pstmt.setString(3, cc.getName());
+						pstmt.setString(4, mc.getName()+" "+mc.getDesc());
+						pstmt.setString(5, CountLineCode);
+						pstmt.setDouble(6, mc.getLineCounter().getTotalCount());
+						pstmt.executeUpdate();
+					}
+					try (PreparedStatement pstmt = conn.prepareStatement(methodSql)) {
+						pstmt.setString(1, cc.getPackageName());
+						pstmt.setString(2, cc.getSourceFileName());
+						pstmt.setString(3, cc.getName());
+						pstmt.setString(4, mc.getName()+" "+mc.getDesc());
+						pstmt.setString(5, CountParams);
+						pstmt.setDouble(6, getMethodParamCount(mc.getDesc()));
 						pstmt.executeUpdate();
 					}
 				}
