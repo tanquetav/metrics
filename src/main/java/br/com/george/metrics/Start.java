@@ -32,19 +32,26 @@ import java.util.regex.Pattern;
 public final class Start {
 
 	private static String classSql = "INSERT INTO class_metrics (package,file,class,metric,value) VALUES (?,?,?,?,?) ";
+	private static String classMaxUpdateSql = "UPDATE class_metrics SET value=max(value,?) WHERE package=? and file=? AND class=? AND metric=?";
 	private static String methodSql = "INSERT INTO method_metrics (package,file,class,method,metric,value) VALUES (?,?,?,?,?,?) ";
 	private static String pkgCreateSql = "INSERT INTO package_metrics (package,metric,value) VALUES (?,?,0) ";
 	private static String fileCreateSql = "INSERT INTO file_metrics (package,file,metric,value) VALUES (?,?,?,0) ";
 	private static String pkgUpdateSql = "UPDATE package_metrics SET value=value+? WHERE package=? AND metric=?";
+	private static String pkgMaxUpdateSql = "UPDATE file_metrics SET value=max(value,?) WHERE package=? and  metric=?";
 	private static String fileUpdateSql = "UPDATE file_metrics SET value=value+? WHERE package=? and file=? AND metric=?";
+	private static String fileMaxUpdateSql = "UPDATE file_metrics SET value=max(value,?) WHERE package=? and file=? AND metric=?";
 
 	private static String CountParams = "CountParams";
+	private static String MaxCyclomatic= "MaxCyclomatic";
 	private static String CyclomaticModified = "CyclomaticModified";
+	private static String MaxCyclomaticModified = "MaxCyclomaticModified";
 	private static String Cyclomatic = "Cyclomatic";
 	private static String CountLineCode = "CountLineCode";
 	private static String CountDeclMethod = "CountDeclMethod";
+	private static String CountDeclClass= "CountDeclClass";
+	private static String CountDeclFunction= "CountDeclFunction";
 
-	private String[] metrics = new String [] {CyclomaticModified,Cyclomatic,CountLineCode};
+	private String[] metrics = new String [] {CyclomaticModified,Cyclomatic,CountLineCode ,MaxCyclomatic ,MaxCyclomaticModified};
 
 	private static Pattern allParamsPattern = Pattern.compile("(\\(.*?\\))");
 	private static Pattern paramsPattern = Pattern.compile("(\\[?)(C|Z|S|I|J|F|D|(:?L[^;]+;))");
@@ -139,6 +146,30 @@ public final class Start {
 					catch (Exception e ) {
 					}
 				}
+				try (PreparedStatement pstmt = conn.prepareStatement(fileCreateSql)) {
+					pstmt.setString(1, cc.getPackageName());
+					pstmt.setString(2, cc.getSourceFileName());
+					pstmt.setString(3, CountDeclClass);
+					pstmt.executeUpdate();
+				}
+				catch (Exception e ) {
+				}
+				try (PreparedStatement pstmt = conn.prepareStatement(fileCreateSql)) {
+					pstmt.setString(1, cc.getPackageName());
+					pstmt.setString(2, cc.getSourceFileName());
+					pstmt.setString(3, CountDeclMethod);
+					pstmt.executeUpdate();
+				}
+				catch (Exception e ) {
+				}
+				try (PreparedStatement pstmt = conn.prepareStatement(fileCreateSql)) {
+					pstmt.setString(1, cc.getPackageName());
+					pstmt.setString(2, cc.getSourceFileName());
+					pstmt.setString(3, CountDeclFunction);
+					pstmt.executeUpdate();
+				}
+				catch (Exception e ) {
+				}
 
 				try (PreparedStatement pstmt = conn.prepareStatement(pkgUpdateSql)) {
 					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
@@ -158,6 +189,20 @@ public final class Start {
 					pstmt.setString(3, CountLineCode);
 					pstmt.executeUpdate();
 				}
+				try (PreparedStatement pstmt = conn.prepareStatement(pkgMaxUpdateSql)) {
+					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, MaxCyclomatic);
+					pstmt.executeUpdate();
+				}
+				try (PreparedStatement pstmt = conn.prepareStatement(pkgMaxUpdateSql)) {
+					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, MaxCyclomaticModified);
+					pstmt.executeUpdate();
+				}
+
+
 				try (PreparedStatement pstmt = conn.prepareStatement(fileUpdateSql)) {
 					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
 					pstmt.setString(2, cc.getPackageName());
@@ -179,7 +224,27 @@ public final class Start {
 					pstmt.setString(4, CountLineCode);
 					pstmt.executeUpdate();
 				}
-
+				try (PreparedStatement pstmt = conn.prepareStatement(fileUpdateSql)) {
+					pstmt.setDouble(1, 1.0);
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, cc.getSourceFileName());
+					pstmt.setString(4, CountDeclClass);
+					pstmt.executeUpdate();
+				}
+				try (PreparedStatement pstmt = conn.prepareStatement(fileMaxUpdateSql)) {
+					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, cc.getSourceFileName());
+					pstmt.setString(4, MaxCyclomatic);
+					pstmt.executeUpdate();
+				}
+				try (PreparedStatement pstmt = conn.prepareStatement(fileMaxUpdateSql)) {
+					pstmt.setDouble(1, cc.getComplexityCounter().getTotalCount());
+					pstmt.setString(2, cc.getPackageName());
+					pstmt.setString(3, cc.getSourceFileName());
+					pstmt.setString(4, MaxCyclomaticModified);
+					pstmt.executeUpdate();
+				}
  				try (PreparedStatement pstmt = conn.prepareStatement(classSql)) {
 					pstmt.setString(1, cc.getPackageName());
 					pstmt.setString(2, cc.getSourceFileName());
@@ -214,6 +279,14 @@ public final class Start {
 				}
 
 				for (IMethodCoverage mc : cc.getMethods()) {
+					try (PreparedStatement pstmt = conn.prepareStatement(fileUpdateSql)) {
+						pstmt.setDouble(1, 1);
+						pstmt.setString(2, cc.getPackageName());
+						pstmt.setString(3, cc.getSourceFileName());
+						pstmt.setString(4, CountDeclFunction);
+						pstmt.executeUpdate();
+					}
+
 					try (PreparedStatement pstmt = conn.prepareStatement(methodSql)) {
 						pstmt.setString(1, cc.getPackageName());
 						pstmt.setString(2, cc.getSourceFileName());
